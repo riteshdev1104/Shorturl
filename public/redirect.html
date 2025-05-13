@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Redirecting...</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .timer-container {
+      margin-top: 3rem;
+      font-size: 1.2rem;
+      color: #444;
+    }
+    #getLink {
+      margin-top: 1.5rem;
+      display: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      background: #22c55e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Redirecting...</h1>
+    <div class="timer-container">
+      Please wait <span id="countdown">10</span> seconds
+    </div>
+    <button id="getLink" onclick="goToTarget()">Get Link</button>
+  </div>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const target = urlParams.get('url');
+    let seconds = 10;
+
+    const interval = setInterval(() => {
+      seconds--;
+      document.getElementById('countdown').innerText = seconds;
+      if (seconds <= 0) {
+        clearInterval(interval);
+        document.getElementById('getLink').style.display = 'inline-block';
+      }
+    }, 1000);
+
+    function goToTarget() {
+      window.location.href = target;
+    }
+  </script>
+</body>
+</html>
