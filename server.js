@@ -1,73 +1,26 @@
-const express = require("express");
-const fs = require("fs");
-const { nanoid } = require("nanoid");
-const bodyParser = require("body-parser");
-const bcrypt = require("bcrypt");
+// server.js const express = require('express'); const fs = require('fs'); const path = require('path'); const bodyParser = require('body-parser'); const app = express(); const PORT = process.env.PORT || 3000;
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+app.use(bodyParser.json()); app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(bodyParser.json());
-app.use(express.static("public"));
+// In-memory database (use MongoDB or other DB in production) let db = {};
 
-let urls = fs.existsSync("urls.json") ? JSON.parse(fs.readFileSync("urls.json")) : {};
-let users = fs.existsSync("users.json") ? JSON.parse(fs.readFileSync("users.json")) : {};
+// Helper to generate short code function generateCode(length = 6) { const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; let code = ''; for (let i = 0; i < length; i++) { code += chars.charAt(Math.floor(Math.random() * chars.length)); } return code; }
 
-// Signup
-app.post("/api/signup", async (req, res) => {
-  const { username, password } = req.body;
-  if (users[username]) return res.status(400).json({ error: "User exists" });
+// Shorten URL app.post('/shorten', (req, res) => { const { longUrl, custom } = req.body; if (!longUrl) return res.json({ error: 'Long URL required' });
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-  users[username] = { password: hashedPassword };
-  fs.writeFileSync("users.json", JSON.stringify(users));
-  res.json({ success: true });
-});
+let short = custom || generateCode(); if (db[short]) return res.json({ error: 'Custom short URL already exists' });
 
-// Login
-app.post("/api/login", async (req, res) => {
-  const { username, password } = req.body;
-  const user = users[username];
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    return res.status(401).json({ error: "Invalid credentials" });
-  }
-  res.json({ success: true, username });
-});
+db[short] = { longUrl, clicks: 0 }; res.json({ short, clicks: 0 }); });
 
-// Shorten URL
-app.post("/api/shorten", (req, res) => {
-  const { longUrl, custom, username } = req.body;
-  const shortId = custom || nanoid(6);
-  if (urls[shortId]) return res.status(409).json({ error: "Short ID already taken" });
+// Redirect with timer logic app.get('/:short', (req, res) => { const short = req.params.short; const record = db[short];
 
-  urls[shortId] = {
-    longUrl,
-    username,
-    clickCount: 0,
-    createdAt: new Date().toISOString()
-  };
-  fs.writeFileSync("urls.json", JSON.stringify(urls));
-  res.json({
-    shortUrl: `${req.protocol}://${req.get("host")}/${shortId}`,
-    qr: `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(`${req.protocol}://${req.get("host")}/${shortId}`)}`
-  });
-});
+if (!record) return res.status(404).send('Short URL not found');
 
-// Redirect and count clicks
-app.get("/:shortId", (req, res) => {
-  const entry = urls[req.params.shortId];
-  if (entry) {
-    entry.clickCount++;
-    fs.writeFileSync("urls.json", JSON.stringify(urls));
-    return res.redirect(entry.longUrl);
-  }
-  res.status(404).send("Short URL not found");
-});
+record.clicks++; const redirectHtmlPath = path.join(__dirname, 'public', 'redirect.html'); let html = fs.readFileSync(redirectHtmlPath, 'utf8');
 
-// Get all user URLs
-app.get("/api/urls/:username", (req, res) => {
-  const userUrls = Object.entries(urls).filter(([_, v]) => v.username === req.params.username);
-  res.json(Object.fromEntries(userUrls));
-});
+// Inject long URL into client-side script html = html.replace( 'const target = urlParams.get('url');', const target = "${record.longUrl}"; );
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+res.send(html); });
+
+app.listen(PORT, () => console.log(Server running on port ${PORT}));
+
