@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Advanced URL Shortener</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Advanced URL Shortener</h1>
+    <div id="auth">
+      <input type="text" id="username" placeholder="Username">
+      <input type="password" id="password" placeholder="Password">
+      <button onclick="signup()">Sign Up</button>
+      <button onclick="login()">Log In</button>
+    </div>
+    <div id="shorten" style="display:none;">
+      <input type="text" id="longUrl" placeholder="Enter long URL">
+      <input type="text" id="custom" placeholder="Custom short (optional)">
+      <button onclick="shortenUrl()">Shorten</button>
+      <p id="result"></p>
+      <div id="myUrls"></div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
